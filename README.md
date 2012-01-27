@@ -3,5 +3,5 @@
 ## Usage
 
 
-```  ./github-receipt --username username --pasword ```
+```  ./github-receipt --username username --password password ```
 ```  ./github-receipt -h ```
