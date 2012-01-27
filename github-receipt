@@ -3,6 +3,7 @@
 import argparse
 import os
 import mechanize
+import subprocess
 from BeautifulSoup import BeautifulSoup
 from datetime import datetime
 
@@ -16,6 +17,12 @@ def downloadPDF(url, filename, billDate):
         f = open(filename + '/Github - ' + str(billDate) + '.pdf', 'wb')
         f.write(br.response().read())
         f.close()
+
+def ledger(billDate, total):
+    total = total.replace('USD $', '') + ' USD'
+    value = 'ledger entry ' + billDate.strftime('%Y/%m/%d') + ' Github ' + total
+    print
+    print subprocess.check_output(value,shell=True),
 
 def main():
     br.open(githubUrl + '/account/receipts')
@@ -33,13 +40,17 @@ def main():
 
     billDate = datetime.strptime(tds[0].text, '%Y-%m-%d').date()
     downloadPDF(url, args.directory, billDate)
+    if (args.ledger):
+        total = tds[3].text
+        ledger(billDate, total)
 
-parser = argparse.ArgumentParser(description='Download your latest github receipt.')
+parser = argparse.ArgumentParser(description='Download your latest github receipt and display a ledger entry.')
 parser.add_argument('--username', type=str, required=True, help='Github username')
 parser.add_argument('--password', type=str, required=True, help='Github password')
 parser.add_argument(
     '-d', '--directory', type=str, help='Directory to download pdf', default='.'
 )
+parser.add_argument('--ledger', action='store_true', help='Print ledger entry')
 
 args = parser.parse_args()
 if __name__ == "__main__":
