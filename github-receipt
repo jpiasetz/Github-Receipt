@@ -2,23 +2,23 @@
 
 import argparse
 import os
+from datetime import datetime
 import mechanize
 from BeautifulSoup import BeautifulSoup
-from datetime import datetime
 
-githubUrl = 'https://github.com'
-br = mechanize.Browser()
-br.set_handle_robots(False)
+GITHUB_URL = 'https://github.com'
 
-def downloadPDF(url, filename, billDate):
+def download_pdf(url, filename, bill_date, br):
     if os.path.isdir(filename):
         br.open(url)
-        f = open(filename + '/Github - ' + str(billDate) + '.pdf', 'wb')
-        f.write(br.response().read())
-        f.close()
+        handler = open(filename + '/Github - ' + str(bill_date) + '.pdf', 'wb')
+        handler.write(br.response().read())
+        handler.close()
 
 def main():
-    br.open(githubUrl + '/account/receipts')
+    br = mechanize.Browser()
+    br.set_handle_robots(False)
+    br.open(GITHUB_URL + '/account/receipts')
 
     br.select_form(nr=0)
     br.form['login'] = args.username
@@ -29,10 +29,10 @@ def main():
     soup = BeautifulSoup(html)
 
     tds = soup.findAll('tr')[1].findAll('td')
-    url = githubUrl + tds[2].a['href']
+    url = GITHUB_URL + tds[2].a['href']
 
-    billDate = datetime.strptime(tds[0].text, '%Y-%m-%d').date()
-    downloadPDF(url, args.directory, billDate)
+    bill_date = datetime.strptime(tds[0].text, '%Y-%m-%d').date()
+    download_pdf(url, args.directory, bill_date, br)
 
 parser = argparse.ArgumentParser(description='Download your latest github receipt.')
 parser.add_argument('--username', type=str, required=True, help='Github username')
