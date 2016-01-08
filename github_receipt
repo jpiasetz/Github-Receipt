@@ -3,28 +3,39 @@
 import argparse
 import os
 from datetime import datetime
-import mechanize
+from mechanize import Browser
 from BeautifulSoup import BeautifulSoup
 
 GITHUB_URL = 'https://github.com'
 
-def download_pdf(url, filename, bill_date, br):
+def download_pdf(url, filename, bill_date, browser):
+    """Save PDF to disk"""
     if os.path.isdir(filename):
-        br.open(url)
-        handler = open(filename + '/Github - ' + str(bill_date) + '.pdf', 'wb')
-        handler.write(br.response().read())
-        handler.close()
+        browser.open(url)
+        path = '{filename}/github - {date}.pdf'.format(filename=filename, date=str(bill_date))
+        with open(path, 'wb') as handler:
+            handler.write(browser.response().read())
 
 def main():
-    br = mechanize.Browser()
-    br.set_handle_robots(False)
-    br.open(GITHUB_URL + '/account/receipts')
+    """Main"""
+    parser = argparse.ArgumentParser(description='Download your latest github receipt.')
+    parser.add_argument('--username', type=str, required=True, help='Github username')
+    parser.add_argument('--password', type=str, required=True, help='Github password')
+    parser.add_argument(
+        '-d', '--directory', type=str, help='Directory to download pdf', default='.'
+    )
 
-    br.select_form(nr=0)
-    br.form['login'] = args.username
-    br.form['password'] = args.password
-    br.submit()
-    html = br.response().read()
+    args = parser.parse_args()
+
+    browser = Browser()
+    browser.set_handle_robots(False)
+    browser.open(GITHUB_URL + '/account/receipts')
+
+    browser.select_form(nr=0)
+    browser.form['login'] = args.username
+    browser.form['password'] = args.password
+    browser.submit()
+    html = browser.response().read()
 
     soup = BeautifulSoup(html)
 
@@ -32,15 +43,7 @@ def main():
     url = GITHUB_URL + tds[2].a['href']
 
     bill_date = datetime.strptime(tds[0].text, '%Y-%m-%d').date()
-    download_pdf(url, args.directory, bill_date, br)
+    download_pdf(url, args.directory, bill_date, browser)
 
-parser = argparse.ArgumentParser(description='Download your latest github receipt.')
-parser.add_argument('--username', type=str, required=True, help='Github username')
-parser.add_argument('--password', type=str, required=True, help='Github password')
-parser.add_argument(
-    '-d', '--directory', type=str, help='Directory to download pdf', default='.'
-)
-
-args = parser.parse_args()
 if __name__ == "__main__":
     main()
