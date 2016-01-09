@@ -16,6 +16,15 @@ def download_pdf(url, filename, bill_date, browser):
         with open(path, 'wb') as handler:
             handler.write(browser.response().read())
 
+def login(browser, args):
+    """Login to Github"""
+    browser.open(GITHUB_URL + '/settings/billing')
+    browser.select_form(nr=0)
+    browser.form['login'] = args.username
+    browser.form['password'] = args.password
+    browser.submit()
+    return browser.response().read()
+
 def main():
     """Main"""
     parser = argparse.ArgumentParser(description='Download your latest github receipt.')
@@ -29,13 +38,7 @@ def main():
 
     browser = Browser()
     browser.set_handle_robots(False)
-    browser.open(GITHUB_URL + '/account/receipts')
-
-    browser.select_form(nr=0)
-    browser.form['login'] = args.username
-    browser.form['password'] = args.password
-    browser.submit()
-    html = browser.response().read()
+    html = login(browser, args)
 
     soup = BeautifulSoup(html)
 
